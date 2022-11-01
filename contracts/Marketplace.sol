@@ -88,6 +88,14 @@ contract MarketPlaceNFT is ReentrancyGuard {
         seller.push(_seller); //push seller
     }
 
+    function cancelSell(uint256 _itemId) external {
+        Item storage item = items[_itemId];
+        require(msg.sender == item.seller, "you dont are the owner of the nft");
+        require(item.sold != true);
+        item.nft.transferFrom(address(this), msg.sender, item.tokenId); // trasnfer the nft to ex seller
+        item.sold = true;
+    }
+
     ///events
     event newNFT(
         uint256 itemId,
@@ -208,6 +216,14 @@ contract MarketPlaceNFT is ReentrancyGuard {
         feeAccount.transfer(_totalPrice); //fee for nft marketplace
         ItemAuction.seller.transfer(ItemAuction.highestBid - _totalPrice); // send value to seller
         emit End(ItemAuction.highestBidder, ItemAuction.highestBid);
+    }
+
+    function cancelAuction(uint256 _itemId) external {
+        itemAuction storage ItemAuction = itemsAuction[_itemId];
+        require(msg.sender == ItemAuction.seller, "you dont are the owner of the nft");
+        require(ItemAuction.sold != true);
+        ItemAuction.nft.transferFrom(address(this), msg.sender, ItemAuction.tokenId); // trasnfer the nft to ex seller
+        ItemAuction.state = State.Canceled;
     }
 
     event End(address Winner, uint256 BestOffer);
