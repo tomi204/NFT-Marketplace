@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -132,7 +132,8 @@ contract MarketPlaceNFT is ReentrancyGuard {
         address payable seller;
         State state;
         bool sold;
-        uint256 creatorFee;
+        uint endAt;
+       // uint256 creatorFee;
         address payable highestBidder; // best bidder address
         uint256 highestBid; // best bid amount
     }
@@ -171,6 +172,8 @@ contract MarketPlaceNFT is ReentrancyGuard {
         require(_startPrice > 0, "price must be greater than zero");
         itemCountA++;
         _nftA.transferFrom(msg.sender, address(this), _tokenId);
+
+        
         itemsAuction[itemCountA] = itemAuction(
             itemCountA,
             _nftA,
@@ -179,6 +182,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
             payable(msg.sender),
             State.Active,
             false,
+            endAt = block.timestamp + 7 days;
             _creatorFee,
             payable(address(0)),
             0
@@ -191,6 +195,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
         require(itemA.sold == false, "error item sold");
         require(msg.value > itemA.startPrice, "error we need more ether");
         require(msg.value > itemA.highestBid, "error you need send more ether");
+        require(itemA.endAt > 0 );
         if (itemA.highestBidder != msg.sender) {
             //security
             itemA.highestBidder.transfer(itemA.highestBid); //trasnfer money for old best bidder
@@ -210,6 +215,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
             msg.sender == ItemAuction.seller,
             "you dont are the owner of the nft"
         );
+        require(endAt == 0);
         require(ItemAuction.sold == false, "error nft sold");
         ItemAuction.sold = true;
         ItemAuction.state = State.Inactive;
