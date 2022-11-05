@@ -132,8 +132,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
         address payable seller;
         State state;
         bool sold;
-        uint endAt;
-       // uint256 creatorFee;
+        uint256 endAt;
         address payable highestBidder; // best bidder address
         uint256 highestBid; // best bid amount
     }
@@ -167,13 +166,11 @@ contract MarketPlaceNFT is ReentrancyGuard {
         IERC721 _nftA,
         uint256 _tokenId,
         uint256 _startPrice,
-        uint256 _creatorFee
+        uint256 _endAt
     ) public {
         require(_startPrice > 0, "price must be greater than zero");
         itemCountA++;
         _nftA.transferFrom(msg.sender, address(this), _tokenId);
-
-        
         itemsAuction[itemCountA] = itemAuction(
             itemCountA,
             _nftA,
@@ -182,10 +179,9 @@ contract MarketPlaceNFT is ReentrancyGuard {
             payable(msg.sender),
             State.Active,
             false,
-            endAt = block.timestamp + 7 days;
-            _creatorFee,
+            _endAt + block.timestamp,
             payable(address(0)),
-            0
+            0      
         );
     }
 
@@ -196,13 +192,12 @@ contract MarketPlaceNFT is ReentrancyGuard {
         require(msg.value > itemA.startPrice, "error we need more ether");
         require(msg.value > itemA.highestBid, "error you need send more ether");
         require(itemA.endAt > 0 );
-        if (itemA.highestBidder != msg.sender) {
-            //security
+        if (itemA.highestBidder != msg.sender) {//security
             itemA.highestBidder.transfer(itemA.highestBid); //trasnfer money for old best bidder
         }
-        itemA.highestBid = msg.value; // value sent
-        itemA.highestBidder = payable(msg.sender); //new best bidder address
-        emit Bid(itemA.highestBidder, itemA.highestBid); // event new best bidder
+            itemA.highestBid = msg.value; // value sent
+            itemA.highestBidder = payable(msg.sender); //new best bidder address
+            emit Bid(itemA.highestBidder, itemA.highestBid); // event new best bidder
     }
 
     event Bid(address bidderAddress, uint256 bidderOffer); // event with best bidder
@@ -215,7 +210,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
             msg.sender == ItemAuction.seller,
             "you dont are the owner of the nft"
         );
-        require(endAt == 0);
+        require(ItemAuction.endAt == 0);
         require(ItemAuction.sold == false, "error nft sold");
         ItemAuction.sold = true;
         ItemAuction.state = State.Inactive;
@@ -228,6 +223,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
         itemAuction storage ItemAuction = itemsAuction[_itemId];
         require(msg.sender == ItemAuction.seller, "you dont are the owner of the nft");
         require(ItemAuction.sold != true);
+        ItemAuction.endAt = 0;
         ItemAuction.nft.transferFrom(address(this), msg.sender, ItemAuction.tokenId); // trasnfer the nft to ex seller
         ItemAuction.state = State.Canceled;
     }
