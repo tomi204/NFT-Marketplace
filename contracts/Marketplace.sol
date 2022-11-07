@@ -13,16 +13,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
 
     mapping(uint256 => uint256) s_security;
 
-    modifier securityFrontRunning(uint256 _itemId) {
-                Item storage item = items[_itemId];
-        require(
-            s_security[_itemId] == 0 || s_security[_itemId] > block.number,
-            "error security"
-        );
-
-        s_security[_itemId] = block.number;
-        _;
-    }
+   
     struct Item {
         uint256 itemId;
         IERC721 nft;
@@ -36,6 +27,17 @@ contract MarketPlaceNFT is ReentrancyGuard {
 
     mapping(uint256 => Item) public items;
 
+
+ modifier securityFrontRunning(uint256 _itemId) {
+                Item storage item = items[_itemId];
+        require(
+            s_security[_itemId] == 0 || s_security[_itemId] > block.number,
+            "error security"
+        );
+
+        s_security[_itemId] = block.number;
+        _;
+    }
     constructor(uint256 _feePercent) {
         feeAccount = payable(msg.sender);
         feePercent = _feePercent;
@@ -128,6 +130,8 @@ contract MarketPlaceNFT is ReentrancyGuard {
     ////////////////////////////// Auction code
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+
+    
     //State of items
     enum State {
         Active,
@@ -153,6 +157,16 @@ contract MarketPlaceNFT is ReentrancyGuard {
     mapping(uint256 => itemAuction) public itemsAuction; ///mapping de los items
     mapping(address => uint256) public bids; //bids
 
+ modifier securityFrontRunningAuction(uint256 _itemId) {
+           itemAuction storage ItemAuction = itemsAuction[_itemId];    
+               require(
+            s_security[_itemId] == 0 || s_security[_itemId] > block.number,
+            "error security"
+        );
+
+        s_security[_itemId] = block.number;
+        _;
+    }
     //change operator
     function changeOperator(uint256 _itemId, State _newState) public {
         itemAuction storage ItemAuction = itemsAuction[_itemId];
