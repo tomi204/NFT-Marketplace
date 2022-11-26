@@ -6,14 +6,13 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract MarketPlaceNFT is ReentrancyGuard {
     //state variables
-
     address payable public immutable feeAccount; // account receives fees
     uint256 public immutable feePercent; //fee percentage
-    uint256 public itemCount;
+    uint256 public itemCount; // item count(used for item id)
 
-    mapping(uint256 => uint256) s_security;
+    mapping(uint256 => uint256) s_security; // security deposit
 
-    struct Item {
+    struct Item { // item struct with all the details
         uint256 itemId;
         IERC721 nft;
         uint256 tokenId;
@@ -24,9 +23,9 @@ contract MarketPlaceNFT is ReentrancyGuard {
 
     
 
-    mapping(uint256 => Item) public items;
+    mapping(uint256 => Item) public items; // list of items
 
-    modifier securityFrontRunning(uint256 _itemId) {
+    modifier securityFrontRunning(uint256 _itemId) { // security frontrunning check
         Item storage item = items[_itemId];
         require(
             s_security[_itemId] == 0 || s_security[_itemId] > block.number,
@@ -40,16 +39,16 @@ contract MarketPlaceNFT is ReentrancyGuard {
     constructor(uint256 _feePercent) {
         feeAccount = payable(msg.sender);
         feePercent = _feePercent;
-    }
+    }//constructor function
 
     modifier onlyOwner() {
         require(msg.sender == feeAccount);
         _;
-    }
+    }// only Owner modifier function
 
     //functions
     ///sell NFT
-    function sellNFT(
+    function sellNFT( //sell nft function
         IERC721 _nft,
         uint256 _tokenId,
         uint256 _price
@@ -74,7 +73,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
     }
 
     //buy direct
-    function buyNFT(uint256 _itemId)
+    function buyNFT(uint256 _itemId)// buy nft function
         external
         payable
         nonReentrant
@@ -87,6 +86,10 @@ contract MarketPlaceNFT is ReentrancyGuard {
         require(
             msg.value >= _totalPrice,
             "not enough ether to cover item price and market fee"
+        ); //require anti scam
+        require(
+            item.nft.ownerOf(item.tokenId) == address(this),
+            "item is not owned by the contract, check if item is already sold"
         ); //require anti scam
         feeAccount.transfer(_totalPrice - item.price); //fee for nft marketplace
         item.seller.transfer(item.price); // send value to seller
@@ -103,9 +106,9 @@ contract MarketPlaceNFT is ReentrancyGuard {
 
     function getTotalPrice(uint256 _itemId) public view returns (uint256) {
         return ((items[_itemId].price * (100 + feePercent)) / 100); //calculate total price
-    }
+    } // get total price function 
 
-    function cancelSell(uint256 _itemId)
+    function cancelSell(uint256 _itemId) // cancel sale function
         external
         securityFrontRunning(_itemId)
     {
@@ -117,22 +120,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
         emit auctionCanceled( _itemId);
     }
    
-    ///events
-    event newNFT(
-        uint256 itemId,
-        address indexed nft,
-        uint256 tokenId,
-        uint256 price,
-        address indexed seller
-    );
-    event NftPurchased(
-        uint256 itemId,
-        address indexed nft,
-        address indexed seller,
-        bool sold,
-        address indexed buyer
-    );
-    event auctionCanceled(uint itemId);
+    
     ///////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////// Auction code
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -279,6 +267,22 @@ contract MarketPlaceNFT is ReentrancyGuard {
         ItemAuction.state = State.Canceled;
     }
 
+   ///events
+    event newNFT(
+        uint256 itemId,
+        address indexed nft,
+        uint256 tokenId,
+        uint256 price,
+        address indexed seller
+    );
+    event NftPurchased(
+        uint256 itemId,
+        address indexed nft,
+        address indexed seller,
+        bool sold,
+        address indexed buyer
+    );
+    event auctionCanceled(uint itemId);
     event Bid(address bidderAddress, uint256 bidderOffer); // event with best bidder
     event End(address Winner, uint256 BestOffer); ///event auction ended
 }
