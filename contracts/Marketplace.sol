@@ -22,7 +22,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
         bool sold;
     }
 
-    address[] public seller;
+    
 
     mapping(uint256 => Item) public items;
 
@@ -56,7 +56,10 @@ contract MarketPlaceNFT is ReentrancyGuard {
     ) external nonReentrant {
         require(_price > 0, "price must be greater than zero");
         itemCount++;
-
+        require(
+            _nft.getApproved(_tokenId) == address(this),
+            "contract is not approved"
+        );
         _nft.transferFrom(msg.sender, address(this), _tokenId);
 
         items[itemCount] = Item(
@@ -153,10 +156,9 @@ contract MarketPlaceNFT is ReentrancyGuard {
         address payable highestBidder; // best bidder address
         uint256 highestBid; // best bid amount
     }
-    uint256 public itemCountA; ////itemCount
+    uint256 public itemCountA; ////itemCount auction
 
     mapping(uint256 => itemAuction) public itemsAuction; ///mapping de los items
-    mapping(address => uint256) public bids; //bids
 
     modifier securityFrontRunningAuction(uint256 _itemId) {
         itemAuction storage ItemAuction = itemsAuction[_itemId];
@@ -170,9 +172,9 @@ contract MarketPlaceNFT is ReentrancyGuard {
     }
 
     //change operator
-    function changeOperator(uint256 _itemId, State _newState) public {
+    function changeOperator(uint256 _itemId, State _newState) public { // function for change the state of the item 
         itemAuction storage ItemAuction = itemsAuction[_itemId];
-        _itemId = ItemAuction.itemId;
+        require(itemAuction.state == State.Active, "item is not active");
         require(
             msg.sender == ItemAuction.seller,
             "you dont are the owner of the nft"
@@ -190,12 +192,16 @@ contract MarketPlaceNFT is ReentrancyGuard {
     }
 
     //start nft auction
-    function startAuction(
+    function startAuction( //function for start one auction
         IERC721 _nftA,
         uint256 _tokenId,
         uint256 _startPrice
     ) public {
         require(_startPrice > 0, "price must be greater than zero");
+        require(
+            _nftA.getApproved(_tokenId) == address(this),
+            "contract is not approved"
+        );
         itemCountA++;
         _nftA.transferFrom(msg.sender, address(this), _tokenId);
         itemsAuction[itemCountA] = itemAuction(
