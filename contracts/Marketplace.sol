@@ -88,7 +88,7 @@ contract MarketPlaceNFT is ReentrancyGuard {
             "not enough ether to cover item price and market fee"
         ); //require anti scam
         require(
-            item.nft.getApproved(item.tokenId) == address(this),
+            item.nft.ownerOf(item.tokenId) == address(this),
             "item is not owned by the contract, check if item is already sold"
         ); //require anti scam
         feeAccount.transfer(_totalPrice - item.price); //fee for nft marketplace
@@ -248,8 +248,8 @@ contract MarketPlaceNFT is ReentrancyGuard {
         );
         emit End(ItemAuction.highestBidder, ItemAuction.highestBid);
     }
-
-    function cancelAuction(uint256 _itemId)
+ 
+      function cancelAuction(uint256 _itemId)//function for old seller
         external
         securityFrontRunningAuction(_itemId)
     {
